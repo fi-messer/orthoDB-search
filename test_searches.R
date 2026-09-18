@@ -1,5 +1,5 @@
-## Start doing some test searches
-# Search at Drosophila level
+#### Start doing some test searches
+#### Search at Drosophila level
 S <- api$search("kmg", level=7215) # run a gene search for kmg
 S[["cluster_ids"]] # retrieve the orthologue tree
 OGS <- api$orthologs("49125at7215") # get a list of orthologues
@@ -22,7 +22,7 @@ drops <- c("interpro", "more_info", "how_much_more_info")
 df1 <- df1[, !(names(df1) %in% drops)]
 # Much better
 
-# How to deal with the duplicated data? 
+#### How to deal with the duplicated data? 
 # I will get a list of species without duplicates, then use this to filter out the data I don't want from the gene search
 
 # Get a list of species ids
@@ -61,3 +61,6 @@ unique(species$sciname) # how many unique species are in the list? = 49
 sum(species$taxon_ver == 0) # is the number of taxon_ver = 0 the same as the number of unique spp? yes
 
 species <- species %>% filter(taxon_ver == 0) # have removed duplicates from the species database
+
+#### Use the species list to filter the gene search output
+df1 %>% df1$gene_id$param
