@@ -22,6 +22,12 @@ drops <- c("interpro", "more_info", "how_much_more_info")
 df1 <- df1[, !(names(df1) %in% drops)]
 # Much better
 
+# Also going to make the double dataframe situation neater
+df1$LOC_id <- df1$gene_id$id
+df1$orthoDB_id <- df1$gene_id$param
+df1$gene_id <- NULL
+# much cleaner
+
 #### How to deal with the duplicated data? 
 # I will get a list of species without duplicates, then use this to filter out the data I don't want from the gene search
 
@@ -63,4 +69,34 @@ sum(species$taxon_ver == 0) # is the number of taxon_ver = 0 the same as the num
 species <- species %>% filter(taxon_ver == 0) # have removed duplicates from the species database
 
 #### Use the species list to filter the gene search output
-df1 %>% df1$gene_id$param
+
+# use species list taxon_id to filter the results based on matching the gene search dataframe geneid$param
+
+grep(species$taxon_id[1], df1$orthoDB_id) # returns indices of matched pattern
+
+test <- NULL
+for (t in (species$taxon_id)) {
+  test <- rbind(test, df1[grep(t, (df1$orthoDB_id)),]) # make a database of just the species I want
+}
+
+# make a new column in the gene search output of the taxon_id
+df1$taxon_id <- NULL
+for (n in 1:(length(taxon_id))) {
+  for (d in 1:length(df1$orthoDB_id)) {
+    if (grepl((taxon_id[n]), df1$orthoDB_id[d]) == TRUE) { # logical, is the taxon id the same as in df1$gene_id$param
+      df1$taxon_id[d] <- taxon_id[n] # print the taxon id to a new column in df1
+    }
+  }
+}
+
+# Now I have the correct taxon id for each line in the search output, I can combine it with my species list
+
+TEST2 <- merge.data.frame(species, df1, by = "taxon_id", all.x = TRUE, all.y = FALSE)
+# This makes a large dataframe with all of the information in it.
+# Make a simplified version
+TEST3 <- TEST2 |> select("taxon_id", "sciname", "description", "LOC_id", "orthoDB_id")
+
+#### Filter based on a particular set of species
+list <- c("drosophila pseudoobscura", "Drosophila miranda", "Drosophila affinis")
+TEST3 %>% filter(sciname %in% list) # works well if you type out the full name, doesn't allow for wrong case or missing values
+
