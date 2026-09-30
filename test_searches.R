@@ -100,3 +100,11 @@ TEST3 <- TEST2 |> select("taxon_id", "sciname", "description", "LOC_id", "orthoD
 list <- c("drosophila pseudoobscura", "Drosophila miranda", "Drosophila affinis")
 TEST3 %>% filter(sciname %in% list) # works well if you type out the full name, doesn't allow for wrong case or missing values
 
+# Try a grep method, should allow for more flexibility in species input
+i <- 1
+for (l in list) {
+  vectors[[i]] <- grep(l, TEST3$sciname, value = FALSE, ignore.case = TRUE)
+  i <- i + 1
+  print(vectors)
+} # loop writes list of row numbers for species in list
+final_output <- TEST3[vectors, ] # use list of row numbers to filter the large dataframe to just the search species.
