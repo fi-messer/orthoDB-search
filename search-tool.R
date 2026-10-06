@@ -1,12 +1,29 @@
 #### OrthoDB Drosophila search tool
+# 1:1 or 1:many version
 
-# species of interest
+# Load packages
 
-# gene(s) of interest
-species <- NULL
-species <- c("melanogaster", "pseudoobscura", "persimilis", "miranda")
+remotes::install_gitlab('ezlab/orthodb_r',build_vignettes = TRUE, dependencies = TRUE)
+library(OrthoDB)
+library(dplyr)
+library(stringr)
 
-gene <- "4805191"
+# User inputs
+
+species <- c("Drosophila melanogaster", "Drosophila pseudoobscura", "Drosophila miranda", "Drosophila subobscura")
+
+gene <- ""
+
+simplified_output <- TRUE # Logical, produces a simplified output with only species name and LOC/CG number
+
+output <- TRUE # Logical, writes output to csv
+
+###################################
+###################################
+
+#### Open OrthoDB connection
+
+api <- OrthoDB::OdbAPI$new()
 
 #### Run the search
 
@@ -37,10 +54,11 @@ OGS_df <- OGS_df[, !(names(OGS_df) %in% drops)] # Remove unnecessary columns
 OGS_df$LOC_id <- OGS_df$gene_id$id
 OGS_df$orthoDB_id <- OGS_df$gene_id$param
 OGS_df$gene_id <- NULL # Removes the nested dataframe by renaming columns
+OGS_df$taxon_id <- str_split_i(OGS_df$orthoDB_id, ":", 1) # makes a column with the taxon_id for easy data extraction with the species list
 
 #### Extract species information for OGS_df filtering
 
-if (is.data.frame(Dros_spp) == TRUE){
+if (exists("Dros_spp") == TRUE){
   print("Species data pre-loaded")
 } else {
   print("Loading species data")
@@ -76,17 +94,23 @@ if (is.data.frame(Dros_spp) == TRUE){
 }
 
 # Filter species data by user-provided species list
-# check whether the full species name is listed or not
-i <- 1
-for (s in species) {
-  if (grepl("Drosophila", s, ignore.case = TRUE) == FALSE) {
-    species[[i]] <- paste0("Drosophila ", s)
-    i <- i +1
-  } else {
-    print(paste0(s, " correct format"))
+species_df <- filter(Dros_spp, sciname %in% species & taxon_ver == 0)
+
+# subset the search data
+OGS_df <- filter(OGS_df, taxon_id %in% species_df$taxon_id)
+
+# merge the data frames
+orthologs <- merge(species_df, OGS_df, by = "taxon_id", all = TRUE)
+
+#### Make a simplified version of the output
+if (simplified_output == TRUE) {
+  orthologs <- orthologs[, c("sciname", "LOC_id")]
+}
+
+if (output == TRUE) {
+  if (dir.exists("outputs") == FALSE) { # Checks for outputs directory and creates outputs/ if not
+    dir.create("outputs")
   }
-} 
+  write.csv(orthologs, paste0("outputs/", gene, "_orthologs.csv")) # writes output csv to file
+}
 
-species
-
-print(filter(Dros_spp, sciname == c(species)))

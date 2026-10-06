@@ -6,3 +6,7 @@
 ## Large file types
 *.tab
 *.tab.gz
+
+## outputs
+*.csv
+outputs/
